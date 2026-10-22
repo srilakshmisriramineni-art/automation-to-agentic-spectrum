@@ -1,0 +1,34 @@
+# Python virtual environments
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment / secrets - only the sample file is tracked
+.env
+.env.*
+!.env.example
+
+# Lab outputs are generated on each run (keep the folder, not the files)
+outputs/*
+!outputs/.gitkeep
+
+# Jupyter / IDE / OS noise
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local embedding model cache (downloaded on first use of fastembed)
+.cache/
+
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+outputs/
