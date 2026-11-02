@@ -1,5 +1,7 @@
 # Day 1 Take-Home Submission - Gowtham
 
+**Code and output (readable, no PDF needed): [`../DAY1_CODE_AND_OUTPUT.md`](../DAY1_CODE_AND_OUTPUT.md)**
+
 Write-up (Parts A-D, tables, answers, scoreboards): `Day1_Take_Home_Submission_Gowtham.docx` (same content in `.pdf`).
 Raw console output of every run: `evidence/` (before = original code, partB, partC_before, final).
 Changed files only: `day1_changed_files.zip`.

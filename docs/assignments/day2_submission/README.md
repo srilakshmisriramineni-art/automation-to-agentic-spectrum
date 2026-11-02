@@ -1,5 +1,7 @@
 # Day 2 Take-Home Submission - Gowtham
 
+**Code and output (readable, no PDF needed): [`../DAY2_CODE_AND_OUTPUT.md`](../DAY2_CODE_AND_OUTPUT.md)**
+
 - Write-up (Parts A-E): `Day2_Take_Home_Submission_Gowtham.docx` / `.pdf`
 - Tier reports + homework sheet + audit log: `reports/` (copies of outputs/, which git ignores)
 - Raw console output of every run: `evidence/`
