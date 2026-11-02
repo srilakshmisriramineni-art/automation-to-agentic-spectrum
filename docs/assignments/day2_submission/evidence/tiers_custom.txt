@@ -1,0 +1,14 @@
+Query custom: Custom prompt
+
+Running opus ...
+Running sonnet ...
+Running haiku ...
+
+tier    ok     secs    cost $   in/out tokens  key numbers       served by
+------------------------------------------------------------------------------------------
+opus    yes     4.0    0.0258           2/419  n/a               claude-opus-5-5
+sonnet  yes     2.7    0.0113           2/261  n/a               claude-sonnet-5-5
+haiku   yes     3.7    0.0009           2/740  n/a               claude-haiku-5-5
+
+Report saved: ./outputs/tier_comparison_custom.md
+Discuss: Is the most expensive tier always worth it? Which tier would you use for this task in production?

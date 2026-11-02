@@ -1,0 +1,2 @@
+{"time": "2026-10-31T14:36:01+00:00", "source": "offline-demo", "tier": "HIGH", "failed_items": ["credit_cap_percent", "credit_for_98_6"]}
+{"time": "2026-10-31T14:36:06+00:00", "source": "claude-sonnet-5-5", "tier": "LOW", "failed_items": []}

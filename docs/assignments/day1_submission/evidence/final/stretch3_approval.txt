@@ -1,0 +1,12 @@
+Pending human approval: 2
+  T-03  ORD-1003    420.00  LATE_DELIVERY  - Late delivery 12 days (>3 day grace), policy 1; above 100 so needs hum
+  T-08  ORD-1008    249.00  LATE_DELIVERY  - Late delivery 11 days (>3 day grace), policy 1; above 100 so needs hum
+Pending human approval: 2
+  T-03  ORD-1003    420.00  LATE_DELIVERY  - Late delivery 12 days (>3 day grace), policy 1; above 100 so needs hum
+  T-08  ORD-1008    249.00  LATE_DELIVERY  - Late delivery 11 days (>3 day grace), policy 1; above 100 so needs hum
+  -> human_approved: T-03 
+  -> human_rejected: T-08 
+Wrote 2 decision(s) to /home/claude/repo/outputs/level5_audit.jsonl
+Pending human approval: 0
+{"time": "2026-10-31T14:14:15+00:00", "action": "human_approved", "ticket_id": "T-03", "order_id": "ORD-1003", "amount": 420.0, "approver": "Team Lead (demo)", "note": ""}
+{"time": "2026-10-31T14:14:15+00:00", "action": "human_rejected", "ticket_id": "T-08", "order_id": "ORD-1008", "amount": 249.0, "approver": "Team Lead (demo)", "note": ""}

@@ -1,0 +1,14 @@
+Query Q2: Short summarisation
+
+Running opus ...
+Running sonnet ...
+Running haiku ...
+
+tier    ok     secs    cost $   in/out tokens  key numbers       served by
+------------------------------------------------------------------------------------------
+opus    yes     2.5    0.0258           2/185  n/a               claude-haiku-5-5, claude-opus-5-5
+sonnet  yes     2.0    0.0123           2/161  n/a               claude-sonnet-5-5
+haiku   yes     1.3    0.0008           2/149  n/a               claude-haiku-5-5
+
+Report saved: ./outputs/tier_comparison_Q2.md
+Discuss: Is the most expensive tier always worth it? Which tier would you use for this task in production?

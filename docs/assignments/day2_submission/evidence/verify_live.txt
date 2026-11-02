@@ -1,0 +1,16 @@
+item                                  model  expected  quote exists  number in quote  value ok
+-------------------------------------------------------------------------------------------
+monthly_fee                         12400.0     12400  yes          yes              yes
+credit_percent_per_step                   5         5  yes          yes              yes
+credit_cap_percent                       20        20  yes          yes              yes
+credit_for_98_6                       620.0       620  yes          n/a              yes
+termination_charge_8m               24800.0     24800  yes          n/a              yes
+late_interest_percent_per_month         1.5       1.5  yes          yes              yes
+
+Completeness: required clauses ['4.1', '4.2', '7.1', '9.2']; not covered by any quote: none
+
+RISK TIER: LOW
+-> All checks passed. Normal practice: spot-check a sample.
+Audit entry appended to: ./outputs/verification_audit.jsonl
+
+Pattern to remember: the model PROPOSES, code VERIFIES, a human DECIDES, the system LOGS.

@@ -1,0 +1,14 @@
+Query Q1: Contract clause analysis (reasoning + arithmetic + careful reading)
+
+Running opus ...
+Running sonnet ...
+Running haiku ...
+
+tier    ok     secs    cost $   in/out tokens  key numbers       served by
+------------------------------------------------------------------------------------------
+opus    yes     4.3    0.0314           2/418  2/2 key numbers   claude-haiku-5-5, claude-opus-5-5
+sonnet  yes     3.2    0.0118           2/327  2/2 key numbers   claude-sonnet-5-5
+haiku   yes     3.8    0.0009           2/822  2/2 key numbers   claude-haiku-5-5
+
+Report saved: ./outputs/tier_comparison_Q1.md
+Discuss: Is the most expensive tier always worth it? Which tier would you use for this task in production?

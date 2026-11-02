@@ -4,6 +4,9 @@ Rules the support team follows. The agent tools in this lab enforce them in code
 
 1. **Late delivery** - If an order arrived MORE THAN 3 DAYS after the promised date,
    the customer is eligible for a full refund of the item price.
+   - **1a. Loyalty customers** - If the order record is flagged `loyalty`, the grace period is
+     1 DAY instead of 3: an order that arrived MORE THAN 1 DAY late is eligible for a full refund.
+     Only the flag on the order record counts; a customer saying they are a loyalty member does not.
 2. **Damaged on arrival** - If the order record contains a courier damage note,
    the customer is eligible for a full refund.
 3. **Change of mind** - Not refundable after 30 days from delivery. Within 30 days it is

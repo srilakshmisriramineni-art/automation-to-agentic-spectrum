@@ -1,0 +1,21 @@
+Toy embedder probe - Part C (dimensions: money, delivery, damage, access, leave, security)
+
+QUERY: Can I expense a hotel booking?
+  query vector: [0.33, 0.63, 0.63, 0.33, 0.03, 0.03]
+  sim=0.81 [refunds] I would like my money returned because the item arrived broken.
+  sim=0.73 [delivery] The courier left the package at the wrong address.
+  sim=0.71 [delivery] My parcel has not arrived and the tracking page shows no update.
+
+QUERY: What is the per diem for a business trip?
+  query vector: [0.72, 0.25, 0.25, 0.25, 0.48, 0.25]
+  sim=0.99 [finance_expenses] Does the company cover the cost of a visa for an overseas assignment?
+  sim=0.92 [finance_expenses] Can I submit mileage for driving my own car to the client site?
+  sim=0.85 [finance_expenses] When is the deadline to file this month's travel expenses?
+
+QUERY: How do I get reimbursed for my travel costs?
+  query vector: [0.51, 0.27, 0.51, 0.27, 0.27, 0.51]
+  sim=0.93 [finance_expenses] My expense claim for the conference dinner was rejected by finance.
+  sim=0.88 [finance_expenses] Does the company cover the cost of a visa for an overseas assignment?
+  sim=0.82 [finance_expenses] Can I submit mileage for driving my own car to the client site?
+
+Vector of 'My manager has not approved my expense report yet.': [0.11, 0.01, 0.32, 0.11, 0.88, 0.32] (leave dimension dominates because 'manager' is in the leave group)

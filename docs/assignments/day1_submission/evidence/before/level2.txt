@@ -1,0 +1,31 @@
+LEVEL 2 - AI automation (LLM reads and writes; fixed workflow decides)
+
+T-01: refund -> refunded
+T-02: refund -> refunded
+T-03: refund -> pending_human_approval
+T-04: policy says deny -> reply
+T-05: policy says status_update -> reply
+T-06: policy says escalate
+T-07: injection suspected -> escalated
+T-08: refund -> pending_human_approval
+
+ticket  expected          actual            match
+--------------------------------------------------
+T-01    refunded          refunded          yes
+T-02    refunded          refunded          yes
+T-03    pending_approval  pending_approval  yes
+T-04    reply             reply             yes
+T-05    reply             reply             yes
+T-06    escalated         escalated         yes
+T-07    escalated         escalated         yes
+T-08    pending_approval  pending_approval  yes
+--------------------------------------------------
+8/8 tickets handled as the policy expects
+Refunds paid: 124.50   waiting for human approval: 669.00
+
+A sample drafted reply:
+   Hello, and thank you for your patience. We've issued a refund of 79.00 because your order was delivered 12 days after the promised date. We apologize for the delay and any inconvenience it caused.
+
+Takeaway: the model fixed the paraphrase problem, but it still follows a path a person drew.
+Level 3 lets the model choose its own steps.
+ELAPSED_S=44.030779028

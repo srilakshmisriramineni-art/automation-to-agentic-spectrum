@@ -14,5 +14,13 @@
   {"topic": "hr_leave", "text": "How many days of annual leave do I get each year?"},
   {"topic": "hr_leave", "text": "I need to book a holiday for the first week of December."},
   {"topic": "hr_leave", "text": "What is the process to report a sick day to my manager?"},
-  {"topic": "hr_leave", "text": "Can I carry unused vacation days into next year?"}
+  {"topic": "hr_leave", "text": "Can I carry unused vacation days into next year?"},
+  {"topic": "finance_expenses", "text": "Where do I upload hotel receipts from last week's business trip?"},
+  {"topic": "finance_expenses", "text": "My expense claim for the conference dinner was rejected by finance."},
+  {"topic": "finance_expenses", "text": "What is the daily meal allowance when travelling for work?"},
+  {"topic": "finance_expenses", "text": "Can I submit mileage for driving my own car to the client site?"},
+  {"topic": "finance_expenses", "text": "When is the deadline to file this month's travel expenses?"},
+  {"topic": "finance_expenses", "text": "Does the company cover the cost of a visa for an overseas assignment?"},
+  {"topic": "finance_expenses", "text": "My manager has not approved my expense report yet."},
+  {"topic": "finance_expenses", "text": "Which cost centre code should I use for the training course fee?"}
 ]

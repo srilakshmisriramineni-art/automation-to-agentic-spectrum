@@ -1,0 +1,39 @@
+Embedder: fastembed bge-small (384-d)
+Embedding 24 sentences ...
+2026-10-31 14:32:31.837 | ERROR    | fastembed.common.model_management:download_model:712 - Could not download model from HuggingFace: 403 Forbidden Falling back to other sources.
+2026-10-31 14:32:31.838 | ERROR    | fastembed.common.model_management:download_model:746 - Could not download model from either source, sleeping for 3.0 seconds, 2 retries left.
+2026-10-31 14:32:35.069 | ERROR    | fastembed.common.model_management:download_model:712 - Could not download model from HuggingFace: 403 Forbidden Falling back to other sources.
+2026-10-31 14:32:35.069 | ERROR    | fastembed.common.model_management:download_model:746 - Could not download model from either source, sleeping for 9.0 seconds, 1 retries left.
+2026-10-31 14:32:44.300 | ERROR    | fastembed.common.model_management:download_model:712 - Could not download model from HuggingFace: 403 Forbidden Falling back to other sources.
+2026-10-31 14:32:44.300 | ERROR    | fastembed.common.model_management:download_model:746 - Could not download model from either source, sleeping for 27.0 seconds, 0 retries left.
+Traceback (most recent call last):
+  File "./solutions/day2_models_and_embeddings/embeddings_map.py", line 185, in <module>
+    main()
+    ~~~~^^
+  File "./solutions/day2_models_and_embeddings/embeddings_map.py", line 154, in main
+    matrix = embed(texts)
+  File "./solutions/day2_models_and_embeddings/embeddings_map.py", line 86, in real_embed
+    model = TextEmbedding("BAAI/bge-small-en-v1.5")      # 384-number vectors
+  File "/usr/local/lib/python3.13/site-packages/fastembed/text/text_embedding.py", line 135, in __init__
+    self.model = EMBEDDING_MODEL_TYPE(
+                 ~~~~~~~~~~~~~~~~~~~~^
+        model_name=model_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/fastembed/text/onnx_embedding.py", line 274, in __init__
+    self._model_dir = self.download_model(
+                      ~~~~~~~~~~~~~~~~~~~^
+        self.model_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        specific_model_path=self._specific_model_path,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/fastembed/common/model_management.py", line 752, in download_model
+    raise ValueError(f"Could not load model {model.model} from any source.")
+ValueError: Could not load model BAAI/bge-small-en-v1.5 from any source.

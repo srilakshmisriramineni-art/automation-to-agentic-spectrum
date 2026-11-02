@@ -1,0 +1,25 @@
+LEVEL 3 - AI agent (model picks its own tool calls)
+
+=== T-10: Hello team, I hope you are all keeping well and that the week has been kind to you. I want...
+  -> calls  lookup_order: {"order_id": "ORD-1010"}
+  <- result lookup_order: {"order_id": "ORD-1010", "customer_email": "jo.kim@example.com", "item": "Desk organiser", "amount": 55.0, "status": "delivered", "ordered": "2026-10-09", "p...
+  -> calls  get_policy: {}
+  <- result get_policy: {"policy": "# Refund policy (fictional retailer, lab use only)\n\nRules the support team follows. The agent tools in this lab enforce them in code.\n\n1. **L...
+  -> calls  escalate_to_human: {"ticket_id": "T-10", "reason": "Customer (owner, jo.kim@example.com) requests a change-of-mind return for ORD-1010 (desk organiser, 55.00, delivered 7 days ...
+  <- result escalate_to_human: {"status": "escalated"}
+  agent says: I've escalated ticket T-10 to a human agent and have not issued a refund.
+
+- **Return request:** The order is ORD-1010, a 55.00 desk organiser. It was delivered 7 days ago, and the customer wants to r
+  (tokens in/out: 6156/657, stopped: end_turn)
+
+ticket  expected          actual            match
+--------------------------------------------------
+T-10    escalated         escalated         yes
+--------------------------------------------------
+1/1 tickets handled as the policy expects
+Refunds paid: 0.00   waiting for human approval: 0.00
+
+Blocked attempts (guardrails at work) are in the audit trail:
+
+Takeaway: the agent adapts to each ticket. One agent doing everything is hard to check, though.
+Level 4 splits the job between specialist agents who check each other.

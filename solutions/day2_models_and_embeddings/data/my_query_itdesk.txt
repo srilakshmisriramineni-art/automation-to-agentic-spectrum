@@ -1,0 +1,9 @@
+IT SERVICE DESK POLICY - EXTRACT (fictional, for training use)
+
+2.1 Priorities. P1: a whole site or a critical system is down. P2: one team is blocked. P3: one user is affected and has a workaround. P4: a request or question.
+
+2.2 Targets. P1: respond within 15 minutes, resolve within 4 hours. P2: respond within 1 hour, resolve within 8 business hours. P3: respond within 4 business hours, resolve within 3 business days. P4: resolve within 5 business days.
+
+3.4 Password resets. The service desk may reset a password only after verifying the caller with a one-time code sent to the phone number already on file. A reset requested by a third party on behalf of a colleague must be refused and logged.
+
+5.1 Escalation. A P2 ticket not resolved within its target is escalated to the Duty Manager (duty.manager@example.com, +44 20 7946 0000).

@@ -47,6 +47,7 @@ Use the tool results as facts. Do not invent amounts or dates."""
 def run_ticket(desk: dt.DisputeDesk, ticket: dict) -> None:
     """Run the agent loop for one ticket and print what it did."""
     tools, handlers = dt.build_tools(desk, dt.SINGLE_TICKET)
+    desk.set_active_ticket(ticket["ticket_id"])   # Part C control: lookups scoped to THIS customer
     prompt = (f"Ticket ID: {ticket['ticket_id']}\nCustomer email on ticket: {ticket['customer_email']}\n"
               f"<ticket>\n{ticket['text']}\n</ticket>")
     print(f"\n=== {ticket['ticket_id']}: {ticket['text'][:90]}...")

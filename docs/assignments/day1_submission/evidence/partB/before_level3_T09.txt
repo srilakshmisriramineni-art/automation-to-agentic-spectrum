@@ -1,0 +1,25 @@
+LEVEL 3 - AI agent (model picks its own tool calls)
+
+=== T-09: My yoga mat (ORD-1009) turned up two days after the promised date. I have been a loyalty m...
+  -> calls  lookup_order: {"order_id": "ORD-1009"}
+  <- result lookup_order: {"order_id": "ORD-1009", "customer_email": "ivan.petrov@example.com", "item": "Yoga mat", "amount": 38.0, "status": "delivered", "ordered": "2026-10-04", "pr...
+  -> calls  get_policy: {}
+  <- result get_policy: {"policy": "# Refund policy (fictional retailer, lab use only)\n\nRules the support team follows. The agent tools in this lab enforce them in code.\n\n1. **L...
+  -> calls  draft_reply: {"ticket_id": "T-09", "message": "Hello Ivan, thank you for contacting us, and for being a loyal customer. I'm sorry your yoga mat (ORD-1009) arrived two day...
+  <- result draft_reply: {"status": "draft_saved"}
+  agent says: I didn't issue a refund for ORD-1009. I saved a draft reply to Ivan explaining why, and a person will review and send it.
+
+The yoga mat arrived 2 days after the promised date. The policy only allows a
+  (tokens in/out: 5299/553, stopped: end_turn)
+
+ticket  expected          actual            match
+--------------------------------------------------
+T-09    escalated         reply             NO  <-- look here
+--------------------------------------------------
+0/1 tickets handled as the policy expects
+Refunds paid: 0.00   waiting for human approval: 0.00
+
+Blocked attempts (guardrails at work) are in the audit trail:
+
+Takeaway: the agent adapts to each ticket. One agent doing everything is hard to check, though.
+Level 4 splits the job between specialist agents who check each other.

@@ -23,7 +23,8 @@ class Verification(unittest.TestCase):
              "credit_percent_per_step": "credit 5% of that month's fee for each full 0.5 percentage points below 99.5%",
              "credit_cap_percent": "up to a maximum credit of 20% of the monthly fee",
              "credit_for_98_6": "credit 5% of that month's fee for each full 0.5 percentage points below 99.5%",
-             "termination_charge_8m": "an early-termination charge equal to two months' fees applies"}
+             "termination_charge_8m": "an early-termination charge equal to two months' fees applies",
+             "late_interest_percent_per_month": "incur interest at 1.5% per month on the overdue amount"}
         vals = vo.ground_truth()
         return {k: {"value": vals[k], "quote": q[k]} for k in q}
 
@@ -50,6 +51,35 @@ class Verification(unittest.TestCase):
         del f["monthly_fee"]
         self.assertFalse(vo.verify(f, DOC)[0]["passed"])
 
+    # ---- Take-home Part D: late-payment interest (clause 4.2, 1.5% per month) ----------------
+    def test_late_interest_ground_truth(self):
+        self.assertEqual(vo.ground_truth()["late_interest_percent_per_month"], 1.5)
+
+    def test_late_interest_correct_is_low(self):
+        checks = vo.verify(self.good(), DOC)
+        row = next(c for c in checks if c["item"] == "late_interest_percent_per_month")
+        self.assertTrue(row["passed"] and row["number_in_quote"])
+        self.assertEqual(vo.risk_tier(checks, vo.clause_coverage(self.good(), DOC))[0], "LOW")
+
+    def test_late_interest_invented_quote_is_high(self):
+        f = self.good()
+        f["late_interest_percent_per_month"] = {"value": 2, "quote": "incur interest at 2% per month on the overdue amount"}
+        checks = vo.verify(f, DOC)
+        row = next(c for c in checks if c["item"] == "late_interest_percent_per_month")
+        self.assertFalse(row["quote_exists"])
+        self.assertEqual(vo.risk_tier(checks)[0], "HIGH")
+
+    def test_decimal_rate_is_not_rounded_when_matching_quote(self):
+        """1.5 must not 'match' a quote that only contains 2 (old variant list included round(1.5) = 2)."""
+        self.assertNotIn("2", vo._number_variants(1.5))
+        self.assertIn("1.5", vo._number_variants(1.5))
+
+    def test_completeness_check_flags_a_silently_missing_clause(self):
+        f = self.good()
+        del f["termination_charge_8m"]                 # nothing quotes clause 9.2 any more
+        self.assertEqual(vo.clause_coverage(f, DOC), {"9.2"})
+        self.assertEqual(vo.clause_coverage(self.good(), DOC), set())
+
 
 class Embeddings(unittest.TestCase):
     def test_toy_vectors_are_unit_length(self):
@@ -65,6 +95,32 @@ class Embeddings(unittest.TestCase):
                              ("How much vacation am I entitled to?", "hr_leave")]:
             top = emb.cosine_top_k(emb.toy_embed([query])[0], m, k=1)[0][0]
             self.assertEqual(rows[top]["topic"], topic, query)
+
+    # ---- Take-home Part C: fifth topic finance_expenses -----------------------------------
+    def rows(self):
+        return json.loads((emb.DATA_DIR / "sentences.json").read_text(encoding="utf-8"))
+
+    def test_new_topic_has_eight_sentences(self):
+        self.assertEqual(sum(r["topic"] == "finance_expenses" for r in self.rows()), 8)
+
+    def test_toy_embedder_cannot_find_expenses_by_synonym(self):
+        """Documents WHY this cannot be a positive toy test: no toy word-group covers expenses,
+        so 'expense', 'hotel', 'booking' fall into checksum nudges and the query lands elsewhere."""
+        rows = self.rows()
+        m = emb.toy_embed([r["text"] for r in rows])
+        top = emb.cosine_top_k(emb.toy_embed(["Can I expense a hotel booking?"])[0], m, k=1)[0][0]
+        self.assertNotEqual(rows[top]["topic"], "finance_expenses")
+
+    def test_real_model_finds_expenses_by_synonym(self):
+        """Runs only where fastembed and its model are available (skipped offline)."""
+        try:
+            rows = self.rows()
+            m = emb.real_embed([r["text"] for r in rows])
+            q = emb.real_embed(["Can I expense a hotel booking?"])[0]
+        except Exception as exc:  # package missing or model download blocked
+            self.skipTest(f"real embedding model not available: {type(exc).__name__}")
+        top3 = [rows[i]["topic"] for i, _ in emb.cosine_top_k(q, m, k=3)]
+        self.assertIn("finance_expenses", top3)
 
     def test_keyword_overlap(self):
         self.assertEqual(emb.keyword_overlap("my money back", "money for you"), 1)

@@ -42,7 +42,8 @@ For derived items, "quote" must be the clause sentence the calculation relies on
   credit_percent_per_step   - credit percent for each 0.5 percentage-point step below the target
   credit_cap_percent        - the maximum credit as a percent of the monthly fee
   credit_for_98_6           - money credit owed when availability was 98.6%
-  termination_charge_8m     - money charge if the Customer terminates after 8 months"""
+  termination_charge_8m     - money charge if the Customer terminates after 8 months
+  late_interest_percent_per_month - interest rate per month on overdue invoices (percent)"""
 
 # A canned "model reply" for the offline demo: two items are deliberately wrong.
 OFFLINE_REPLY = json.dumps({
@@ -51,6 +52,7 @@ OFFLINE_REPLY = json.dumps({
     "credit_cap_percent": {"value": 25, "quote": "up to a maximum credit of 25% of the monthly fee"},          # WRONG: invented quote and number
     "credit_for_98_6": {"value": 1240, "quote": "the Supplier shall credit 5% of that month's fee for each full 0.5 percentage points below 99.5%"},   # WRONG: 2 steps instead of 1
     "termination_charge_8m": {"value": 24800, "quote": "an early-termination charge equal to two months' fees applies"},
+    "late_interest_percent_per_month": {"value": 1.5, "quote": "Invoices unpaid after 30 days incur interest at 1.5% per month on the overdue amount"},
 })
 
 
@@ -63,12 +65,18 @@ def ground_truth() -> dict[str, float]:
     full_steps = int((target - availability + 1e-9) // step_size)       # whole 0.5-point steps below target
     credit = min(fee * step_pct / 100 * full_steps, fee * cap_pct / 100)  # cap at 20% of the fee
     termination = 2 * fee                                                # two months' fees
+    late_interest = 1.5                                                  # clause 4.2: 1.5% per month
     return {"monthly_fee": fee, "credit_percent_per_step": step_pct, "credit_cap_percent": cap_pct,
-            "credit_for_98_6": round(credit, 2), "termination_charge_8m": termination}
+            "credit_for_98_6": round(credit, 2), "termination_charge_8m": termination,
+            "late_interest_percent_per_month": late_interest}
 
 
 # Items whose number must literally appear inside the quote (others are derived by calculation).
-NUMBER_IN_QUOTE = {"monthly_fee", "credit_percent_per_step", "credit_cap_percent"}
+NUMBER_IN_QUOTE = {"monthly_fee", "credit_percent_per_step", "credit_cap_percent", "late_interest_percent_per_month"}
+
+# Clauses whose figures we rely on. Used by the completeness check below (take-home Part D answer):
+# a reply can pass every per-item check and still silently ignore a clause.
+REQUIRED_CLAUSES = {"4.1", "4.2", "7.1", "9.2"}
 
 
 def _squash(text: str) -> str:
@@ -79,8 +87,22 @@ def _squash(text: str) -> str:
 def _number_variants(value: float) -> list[str]:
     """Ways the same number may be written in a contract: 12400, 12,400, 12,400.00, 5, 5%."""
     n = float(value)
-    forms = {f"{n:,.2f}", f"{n:,.0f}", f"{n:.0f}", f"{n:g}"}
+    forms = {f"{n:,.2f}", f"{n:g}"}
+    if n.is_integer():                       # only whole numbers may be written without decimals;
+        forms |= {f"{n:,.0f}", f"{n:.0f}"}   # otherwise 1.5 would also "match" a quote containing "2"
     return sorted(forms)
+
+
+def clause_coverage(findings: dict, document: str) -> set[str]:
+    """
+    Completeness check: which REQUIRED clauses are not supported by ANY quote in the reply?
+    Each clause's text is located in the document; a clause counts as covered when some
+    returned quote is found inside that clause's text.
+    """
+    clauses = {m.group(1): _squash(m.group(2)) for m in
+               re.finditer(r"^(\d+\.\d+)\s+(.*?)(?=^\d+\.\d+\s|\Z)", document, flags=re.M | re.S)}
+    quotes = [_squash(str(v.get("quote", ""))) for v in findings.values() if isinstance(v, dict)]
+    return {c for c in REQUIRED_CLAUSES if not any(q and q in clauses.get(c, "") for q in quotes)}
 
 
 def verify(findings: dict, document: str) -> list[dict]:
@@ -106,12 +128,14 @@ def verify(findings: dict, document: str) -> list[dict]:
     return checks
 
 
-def risk_tier(checks: list[dict]) -> tuple[str, str]:
+def risk_tier(checks: list[dict], uncovered: set[str] | None = None) -> tuple[str, str]:
     """Turn check results into a tier and the action it implies."""
     if any(not c["quote_exists"] for c in checks):
         return "HIGH", "Possible fabricated evidence. Do not use. A person must review the source."
     if any(not c["value_correct"] for c in checks):
         return "MEDIUM", "Numbers disagree with recalculation. A person must correct them before use."
+    if uncovered:
+        return "MEDIUM", f"Clause(s) {', '.join(sorted(uncovered))} not supported by any quote. A person must check nothing was left out."
     return "LOW", "All checks passed. Normal practice: spot-check a sample."
 
 
@@ -146,14 +170,16 @@ def main() -> None:
         raise SystemExit("The model did not return usable JSON. That is itself a result: do not act on it.")
 
     checks = verify(findings, document)
-    print(f"{'item':<26}{'model':>10}{'expected':>10}  quote exists  number in quote  value ok")
-    print("-" * 84)
+    print(f"{'item':<33}{'model':>10}{'expected':>10}  quote exists  number in quote  value ok")
+    print("-" * 91)
     for c in checks:
         niq = "n/a" if c["number_in_quote"] is None else ("yes" if c["number_in_quote"] else "NO")
-        print(f"{c['item']:<26}{str(c['model_value']):>10}{c['expected']:>10g}  "
+        print(f"{c['item']:<33}{str(c['model_value']):>10}{c['expected']:>10g}  "
               f"{'yes' if c['quote_exists'] else 'NO':<13}{niq:<17}{'yes' if c['value_correct'] else 'NO'}")
 
-    tier, action = risk_tier(checks)
+    uncovered = clause_coverage(findings, document)
+    print(f"\nCompleteness: required clauses {sorted(REQUIRED_CLAUSES)}; not covered by any quote: {sorted(uncovered) or 'none'}")
+    tier, action = risk_tier(checks, uncovered)
     print(f"\nRISK TIER: {tier}\n-> {action}")
     print(f"Audit entry appended to: {write_audit(tier, checks, source)}")
     print("\nPattern to remember: the model PROPOSES, code VERIFIES, a human DECIDES, the system LOGS.")

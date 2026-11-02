@@ -36,6 +36,7 @@ TODAY = date(2026, 10, 22)
 
 # Policy numbers (kept in step with data/policy.md).
 LATE_GRACE_DAYS = 3          # an order is "late" only if it arrived MORE than this many days after the promise
+LOYALTY_LATE_GRACE_DAYS = 1  # Rule 1a: customers flagged 'loyalty' ON THE ORDER RECORD get a shorter grace period
 CHANGE_OF_MIND_DAYS = 30     # change-of-mind window, counted from delivery
 AUTO_APPROVE_LIMIT = 100.00  # an agent may approve refunds up to this value by itself
 
@@ -98,10 +99,14 @@ def evaluate(ticket_email: str, order: dict | None) -> dict[str, Any]:
     if "crushed" in order["condition_note"].lower() or "damaged" in order["condition_note"].lower():
         return _decision("refund", "DAMAGED", order["amount"], "Courier recorded damage on arrival.", order)
 
-    # Rule 1 - late delivery beyond the grace period.
-    if days_late > LATE_GRACE_DAYS:
-        return _decision("refund", "LATE_DELIVERY", order["amount"],
-                         f"Delivered {days_late} days after the promised date.", order)
+    # Rule 1 / 1a - late delivery beyond the grace period. Loyalty customers get a shorter grace.
+    # The loyalty flag is read from OUR order data only - a ticket that merely CLAIMS loyalty does not count.
+    grace = late_grace_days(order)
+    if days_late > grace:
+        code = "LATE_DELIVERY_LOYALTY" if grace == LOYALTY_LATE_GRACE_DAYS and days_late <= LATE_GRACE_DAYS \
+            else "LATE_DELIVERY"
+        return _decision("refund", code, order["amount"],
+                         f"Delivered {days_late} days after the promised date (grace {grace} days).", order)
 
     # Rule 3 - change of mind: outside the window it is a plain denial.
     days_since_delivery = (TODAY - delivered).days
@@ -112,6 +117,11 @@ def evaluate(ticket_email: str, order: dict | None) -> dict[str, Any]:
 
     # Within the window but no fault found: a person must decide.
     return _decision("escalate", "MANUAL_REVIEW", 0, "No fault found; needs a human decision.")
+
+
+def late_grace_days(order: dict) -> int:
+    """Grace period (days) for the late-delivery rule: 1 for loyalty customers, 3 for everyone else."""
+    return LOYALTY_LATE_GRACE_DAYS if order.get("loyalty") is True else LATE_GRACE_DAYS
 
 
 def _decision(decision: str, code: str, amount: float, why: str, order: dict | None = None) -> dict[str, Any]:
@@ -144,6 +154,13 @@ class DisputeDesk:
         self.replies: list[dict] = []             # customer replies drafted
         self.audit: list[dict] = []               # everything, in order
         self._write_logs = write_logs
+        # Take-home Part C control: the ticket whose customer the agent is serving. Set by OUR code
+        # (Level 3/4 harness) - when set, the model cannot change it by passing another ticket_id.
+        self.active_ticket_id: str | None = None
+
+    def set_active_ticket(self, ticket_id: str | None) -> None:
+        """Code-only (not a tool): lock order lookups to this ticket's customer."""
+        self.active_ticket_id = ticket_id
 
     # -- audit ---------------------------------------------------------------------
     def log(self, action: str, **details: Any) -> None:
@@ -160,17 +177,40 @@ class DisputeDesk:
         return path
 
     # -- read-only tools (safe) ---------------------------------------------------------
-    def lookup_order(self, order_id: str) -> dict:
-        """Return an order record plus derived facts the model should not have to calculate."""
+    def lookup_order(self, order_id: str, ticket_id: str | None = None) -> dict:
+        """
+        Return an order record plus derived facts the model should not have to calculate.
+
+        CONTROL (take-home Part C) - ticket-scoped data access:
+        the full record is returned only when the order belongs to the customer on the ticket
+        being handled. Otherwise the agent gets a REDACTED stub (no email, item, amount or dates)
+        and an instruction to escalate. An injected "also look at ORD-xxxx" can no longer pull
+        another customer's personal data into the agent's context or into a drafted reply.
+        Which ticket is in scope comes from code (active_ticket_id) when the harness set it;
+        only the queue agent (Level 5) supplies ticket_id itself.
+        """
         order = self.orders.get(order_id.strip().upper())
-        self.log("lookup_order", order_id=order_id, found=bool(order))
+        scope_tid = self.active_ticket_id or ticket_id
+        scope = self.tickets.get(scope_tid) if scope_tid else None
         if not order:
+            self.log("lookup_order", order_id=order_id, ticket_id=scope_tid, found=False)
             return {"error": f"Order {order_id} not found"}
+        if scope is None or scope["customer_email"].lower() != order["customer_email"].lower():
+            why = "NO_TICKET_IN_SCOPE" if scope is None else "ORDER_NOT_OWNED_BY_TICKET_CUSTOMER"
+            self.log("lookup_order_REDACTED", order_id=order["order_id"], ticket_id=scope_tid, why=why)
+            return {"order_id": order["order_id"], "found": True, "owner_matches_ticket": False,
+                    "redacted": why,
+                    "note": ("Details withheld: pass the ticket_id you are handling." if scope is None else
+                             "This order belongs to a different customer than the ticket. Do not refund "
+                             "or discuss it; escalate the ticket to a human.")}
+        self.log("lookup_order", order_id=order_id, ticket_id=scope_tid, found=True)
         result = dict(order)
+        result["owner_matches_ticket"] = True
         if order["delivered"]:
             # Derived by code, so the model never does date arithmetic (a classic source of mistakes).
             result["days_late"] = (_d(order["delivered"]) - _d(order["promised"])).days
             result["days_since_delivery"] = (TODAY - _d(order["delivered"])).days
+            result["late_grace_days"] = late_grace_days(order)   # so the model applies Rule 1a correctly
         return result
 
     def get_policy(self) -> dict:
@@ -267,8 +307,12 @@ def _tool(name: str, description: str, properties: dict, required: list[str]) ->
 _STR = {"type": "string"}
 
 TOOL_DEFS: dict[str, dict] = {
-    "lookup_order": _tool("lookup_order", "Look up an order by ID. Returns status, dates, amount, courier notes, days_late.",
-                          {"order_id": {**_STR, "description": "e.g. ORD-1001"}}, ["order_id"]),
+    "lookup_order": _tool("lookup_order",
+                          "Look up an order by ID for the ticket you are handling. Returns status, dates, amount, "
+                          "courier notes, days_late. Orders of other customers come back redacted.",
+                          {"order_id": {**_STR, "description": "e.g. ORD-1001"},
+                           "ticket_id": {**_STR, "description": "the ticket you are handling, e.g. T-01"}},
+                          ["order_id"]),
     "get_policy": _tool("get_policy", "Return the refund policy text.", {}, []),
     "get_ticket": _tool("get_ticket", "Return one support ticket by ID.", {"ticket_id": _STR}, ["ticket_id"]),
     "list_open_tickets": _tool("list_open_tickets", "List ticket IDs that still need handling.", {}, []),

@@ -127,7 +127,9 @@ def plot_map(vectors: np.ndarray, rows: list[dict], title: str, path: Path) -> N
 
     points = PCA(n_components=2, random_state=0).fit_transform(vectors)  # keep the 2 directions with most variation
     topics = sorted({r["topic"] for r in rows})
-    palette = ["#1f77b4", "#d95f02", "#2ca02c", "#7b3294"]              # distinct, colour-blind-friendly
+    # distinct, colour-blind-friendly. Take-home: a 5th colour was needed - with only 4, zip() below
+    # silently dropped the fifth topic (finance_expenses) from the map.
+    palette = ["#1f77b4", "#d95f02", "#2ca02c", "#7b3294", "#e7298a", "#666666"]
     fig, ax = plt.subplots(figsize=(8, 6))
     for colour, topic in zip(palette, topics):
         idx = [i for i, r in enumerate(rows) if r["topic"] == topic]
